@@ -1,0 +1,44 @@
+{
+  "modelName": "Servidor Web - Contexto 1 (M/M/N/K)",
+  "definitions": [
+    { "name": "ATRASO_CHEGADA", "type": "DOUBLE",  "value": "20.0" },
+    { "name": "T_SERV",         "type": "DOUBLE",  "value": "50.0" },
+    { "name": "N_SERV",         "type": "INTEGER", "value": "4" },
+    { "name": "K_CAP",          "type": "INTEGER", "value": "10" }
+  ],
+  "places": [
+    { "name": "Vagas",    "initialMarking": 10, "stringMarking": "K_CAP",  "initialStringMarking": "K_CAP" },
+    { "name": "Fila",     "initialMarking": 0,  "stringMarking": "0",      "initialStringMarking": "0" },
+    { "name": "Servidor", "initialMarking": 4,  "stringMarking": "N_SERV", "initialStringMarking": "N_SERV" },
+    { "name": "EmProc",   "initialMarking": 0,  "stringMarking": "0",      "initialStringMarking": "0" }
+  ],
+  "rewardMeasures": [
+    { "name": "TP_req_s", "expression": "E{#EmProc} / T_SERV * 1000" },
+    { "name": "U_pct",    "expression": "E{#EmProc} / N_SERV * 100" },
+    { "name": "DP_pct",   "expression": "P{#Vagas = 0} * 100" },
+    { "name": "MQT_ms",   "expression": "E{#Fila} / (E{#EmProc} / T_SERV * 1000)" },
+    { "name": "MPT_ms",   "expression": "E{#EmProc} / (E{#EmProc} / T_SERV * 1000)" },
+    { "name": "MRT_ms",   "expression": "(E{#Fila} + E{#EmProc}) / (E{#EmProc} / T_SERV * 1000)" }
+  ],
+  "transitions": [
+    { "name": "Chegada", "type": "TIMED", "firingPolicy": "SINGLE_SERVER",
+      "raceType": "RACE_WITH_ENABLING_MEMORY", "priority": 1,
+      "distribution": { "type": "exponential", "parameters": { "Mean delay": "ATRASO_CHEGADA" } },
+      "inputArcs":  [{ "type": "INPUT",  "place": "Vagas", "multiplicity": 1 }],
+      "outputArcs": [{ "type": "OUTPUT", "place": "Fila",  "multiplicity": 1 }],
+      "inhibitorArcs": [] },
+    { "name": "Inicio", "type": "IMMEDIATE", "firingPolicy": "SINGLE_SERVER",
+      "raceType": "RACE_WITH_ENABLING_MEMORY", "priority": 1, "weight": 1,
+      "inputArcs":  [{ "type": "INPUT", "place": "Fila",     "multiplicity": 1 },
+                     { "type": "INPUT", "place": "Servidor", "multiplicity": 1 }],
+      "outputArcs": [{ "type": "OUTPUT", "place": "EmProc", "multiplicity": 1 }],
+      "inhibitorArcs": [] },
+    { "name": "Fim", "type": "TIMED", "firingPolicy": "INFINITY_SERVER",
+      "raceType": "RACE_WITH_ENABLING_MEMORY", "priority": 1,
+      "distribution": { "type": "exponential", "parameters": { "Mean delay": "T_SERV" } },
+      "inputArcs":  [{ "type": "INPUT",  "place": "EmProc", "multiplicity": 1 }],
+      "outputArcs": [{ "type": "OUTPUT", "place": "Servidor", "multiplicity": 1 },
+                     { "type": "OUTPUT", "place": "Vagas",    "multiplicity": 1 }],
+      "inhibitorArcs": [] }
+  ]
+}
